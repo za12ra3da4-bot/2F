@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2반 유나이티드 전술 보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07100a; --bg2:#0c1810; --bg3:#111f15;
+  --pitch:#1e5228; --pitch2:#22592d;
+  --line:rgba(255,255,255,0.28);
+  --accent:#39ff88; --accent2:#00c95a; --glow:rgba(57,255,136,0.25);
+  --gold:#f5c842; --blue:#3d8eff; --orange:#ff6b35; --purple:#a78bfa; --teal:#6ee7b7;
+  --text:#eef4f0; --text2:rgba(238,244,240,0.5);
+  --border:rgba(255,255,255,0.07); --card:rgba(15,28,18,0.97); --sel:rgba(57,255,136,0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;user-select:none;
+  background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(57,255,136,0.05) 0%,transparent 70%);}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;
+  border-bottom:1px solid var(--border);background:rgba(7,16,10,0.95);
+  backdrop-filter:blur(12px);position:sticky;top:0;z-index:200;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-badge{width:42px;height:42px;background:linear-gradient(135deg,var(--accent2),var(--accent));
+  border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;
+  box-shadow:0 0 18px var(--glow);}
+.logo-text h1{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--accent);line-height:1;}
+.logo-text p{font-size:9px;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.hbtns{display:flex;gap:8px;align-items:center;}
+.btn{padding:7px 16px;border-radius:6px;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .18s;border:none;letter-spacing:.5px;}
+.btn-outline{background:transparent;border:1.5px solid rgba(57,255,136,0.35);color:var(--accent);}
+.btn-outline:hover{background:var(--sel);border-color:var(--accent);box-shadow:0 0 10px var(--glow);}
+.btn-solid{background:var(--accent2);color:#07100a;font-weight:900;}
+.btn-solid:hover{background:var(--accent);box-shadow:0 0 14px var(--glow);}
+.btn-ghost{background:rgba(255,255,255,0.05);border:1.5px solid var(--border);color:var(--text2);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);}
+
+/* LAYOUT */
+.main{display:grid;grid-template-columns:1fr 320px;gap:18px;padding:20px 24px;max-width:1160px;margin:0 auto;}
+
+/* PITCH SECTION */
+.pitch-section{display:flex;flex-direction:column;gap:12px;}
+.pitch-topbar{display:flex;align-items:flex-start;justify-content:space-between;}
+.formation-title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:3px;line-height:1;}
+.ftype-badge{font-size:9px;font-weight:900;padding:3px 9px;border-radius:20px;
+  letter-spacing:2px;margin-left:10px;vertical-align:middle;color:#07100a;}
+.pitch-controls{display:flex;gap:7px;align-items:center;}
+.stats-bar{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;}
+.stat-chip{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;
+  padding:4px 10px;font-size:10px;display:flex;align-items:center;gap:5px;}
+.stat-dot{width:5px;height:5px;border-radius:50%;}
+
+/* BIG PITCH */
+.pitch-wrap{position:relative;width:100%;padding-bottom:138%;border-radius:12px;overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6),0 0 0 1px var(--border);cursor:default;}
+.pitch-inner{position:absolute;inset:0;background:linear-gradient(180deg,var(--pitch2) 0%,var(--pitch) 100%);}
+
+/* Grass stripes */
+.pitch-inner::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 40px,rgba(0,0,0,0.07) 40px,rgba(0,0,0,0.07) 80px);
+  pointer-events:none;}
+
+/* GRID OVERLAY (바둑판) */
+.pitch-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.055) 1px,transparent 1px);
+  background-size:10% 10%;
+  transition:opacity .2s;}
+.pitch-wrap.drag-active .pitch-grid{
+  background-image:
+    linear-gradient(rgba(255,255,255,0.13) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.13) 1px,transparent 1px);}
+
+/* Grid dots at intersections (subtle) */
+.pitch-grid::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,0.18) 1px,transparent 1px);
+  background-size:10% 10%;}
+
+/* Pitch markings */
+.pm{position:absolute;pointer-events:none;}
+.pm-border{inset:7%;border:2px solid var(--line);border-radius:2px;}
+.pm-cline{left:7%;right:7%;top:50%;height:2px;background:var(--line);}
+.pm-ccircle{left:50%;top:50%;transform:translate(-50%,-50%);width:20%;padding-bottom:20%;
+  border:2px solid var(--line);border-radius:50%;}
+.pm-cdot{left:50%;top:50%;transform:translate(-50%,-50%);width:7px;height:7px;
+  background:var(--line);border-radius:50%;}
+.pm-ptop{left:50%;transform:translateX(-50%);top:7%;width:46%;height:13%;border:2px solid var(--line);}
+.pm-pbot{left:50%;transform:translateX(-50%);bottom:7%;width:46%;height:13%;border:2px solid var(--line);}
+.pm-gtop{left:50%;transform:translateX(-50%);top:7%;width:24%;height:5%;border:2px solid var(--line);}
+.pm-gbot{left:50%;transform:translateX(-50%);bottom:7%;width:24%;height:5%;border:2px solid var(--line);}
+
+/* PLAYER DOTS */
+.pdot{position:absolute;transform:translate(-50%,-50%);z-index:20;cursor:grab;touch-action:none;}
+.pdot.is-dragging{cursor:grabbing;z-index:50;transition:none!important;}
+.pdot:not(.is-dragging){transition:left .05s,top .05s;}
+.pdot-circle{width:42px;height:42px;border-radius:50%;
+  background:rgba(255,255,255,0.9);border:2.5px solid rgba(255,255,255,0.5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:#0a1a0d;
+  box-shadow:0 3px 14px rgba(0,0,0,0.55);transition:all .15s;flex-direction:column;}
+.pdot-circle.is-gk{background:var(--gold);border-color:rgba(245,200,66,0.6);color:#2a1800;}
+.pdot-circle.has-name{background:linear-gradient(135deg,var(--accent2),#009940);color:#07100a;border-color:var(--accent);}
+.pdot:hover .pdot-circle{transform:scale(1.1);box-shadow:0 4px 18px rgba(0,0,0,0.65);}
+.pdot.is-dragging .pdot-circle{transform:scale(1.15);box-shadow:0 6px 24px rgba(0,0,0,0.7),0 0 0 2px var(--accent);}
+.pdot-name{font-size:8px;font-weight:900;line-height:1.1;text-align:center;max-width:36px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.pdot-pos{font-size:7px;opacity:.7;font-weight:700;}
+.pdot-label{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  font-size:8px;font-weight:700;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.9);
+  white-space:nowrap;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;pointer-events:none;}
+
+/* DRAG HINT */
+.drag-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:1px;pointer-events:none;z-index:5;}
+
+/* RIGHT PANEL */
+.right-panel{display:flex;flex-direction:column;gap:14px;min-height:0;}
+
+.panel-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text2);font-weight:700;margin-bottom:6px;}
+
+/* FORMATION LIST */
+.flist{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:420px;overflow-y:auto;padding-right:2px;}
+.flist::-webkit-scrollbar{width:3px;}
+.flist::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+
+.fcard{background:var(--card);border:1.5px solid var(--border);border-radius:10px;
+  padding:9px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.fcard::before{content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(135deg,rgba(57,255,136,0.07),transparent);transition:opacity .2s;}
+.fcard:hover{border-color:rgba(57,255,136,0.3);transform:translateY(-2px);box-shadow:0 5px 18px rgba(0,0,0,0.4);}
+.fcard:hover::before{opacity:1;}
+.fcard.active{border-color:var(--accent);background:var(--sel);box-shadow:0 0 18px var(--glow);}
+.fcard.active::before{opacity:1;}
+.fcard-name{font-size:11px;font-weight:700;color:var(--text);margin-bottom:1px;}
+.fcard.active .fcard-name{color:var(--accent);}
+.fcard-desc{font-size:9px;color:var(--text2);margin-bottom:4px;}
+.active-tag{position:absolute;top:6px;right:6px;background:var(--accent);color:#07100a;
+  font-size:7px;font-weight:900;padding:2px 5px;border-radius:3px;letter-spacing:1px;}
+.ftype-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+
+/* Mini pitch */
+.mpitch{position:relative;width:100%;padding-bottom:62%;border-radius:5px;overflow:hidden;margin-top:6px;
+  background:linear-gradient(180deg,var(--pitch2),var(--pitch));}
+.mpitch::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 10px,rgba(0,0,0,0.07) 10px,rgba(0,0,0,0.07) 20px);}
+.mpitch-border{position:absolute;inset:5%;border:1px solid var(--line);border-radius:1px;}
+.mpitch-cline{position:absolute;left:5%;right:5%;top:50%;height:1px;background:var(--line);}
+.mdot{position:absolute;transform:translate(-50%,-50%);width:9px;height:9px;
+  border-radius:50%;background:rgba(255,255,255,0.88);
+  border:1.2px solid rgba(255,255,255,0.45);box-shadow:0 1px 5px rgba(0,0,0,0.4);}
+.mdot.gk{background:var(--gold);border-color:rgba(245,200,66,0.5);}
+
+/* ROSTER */
+.roster-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex:1;}
+.roster-hdr{padding:12px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;}
+.roster-hdr h3{font-size:12px;font-weight:700;letter-spacing:.5px;}
+.rlist{padding:6px;display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto;}
+.rlist::-webkit-scrollbar{width:3px;}
+.rlist::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+.ritem{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;
+  background:rgba(255,255,255,0.02);cursor:pointer;transition:all .14s;}
+.ritem:hover{background:rgba(57,255,136,0.07);}
+.rnum{width:20px;height:20px;background:rgba(255,255,255,0.07);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--text2);flex-shrink:0;}
+.rname{font-size:11px;font-weight:700;}
+.rpos{font-size:9px;color:var(--text2);}
+.redit{font-size:9px;color:var(--text2);opacity:0;transition:opacity .14s;margin-left:auto;}
+.ritem:hover .redit{opacity:1;}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.moverlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg3);border:1px solid rgba(57,255,136,0.22);border-radius:16px;padding:26px;width:300px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.7),0 0 35px var(--glow);
+  transform:translateY(18px) scale(0.97);transition:transform .2s;}
+.moverlay.open .modal{transform:translateY(0) scale(1);}
+.modal h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--accent);margin-bottom:4px;}
+.modal p{font-size:11px;color:var(--text2);margin-bottom:16px;}
+.mfield{margin-bottom:12px;}
+.mfield label{display:block;font-size:10px;font-weight:700;letter-spacing:1px;
+  color:var(--text2);text-transform:uppercase;margin-bottom:5px;}
+.mfield input,.mfield select{width:100%;padding:9px 12px;background:rgba(255,255,255,0.05);
+  border:1.5px solid var(--border);border-radius:7px;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.mfield input:focus,.mfield select:focus{border-color:var(--accent2);}
+.mfield select option{background:#111;}
+.mbtns{display:flex;gap:8px;margin-top:18px;}
+.mbtns .btn{flex:1;padding:10px;font-size:12px;}
+.btn-danger{background:rgba(255,80,80,0.12);color:#ff6b6b;border:1.5px solid rgba(255,80,80,0.28);}
+.btn-danger:hover{background:rgba(255,80,80,0.22);}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:var(--accent2);color:#07100a;font-size:12px;font-weight:700;
+  padding:9px 20px;border-radius:28px;box-shadow:0 4px 18px var(--glow);
+  opacity:0;pointer-events:none;transition:all .28s;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ══════════════════════════════════════
+   SCENE EDITOR (장면 만들기)
+══════════════════════════════════════ */
+.scene-section{max-width:1160px;margin:0 auto;padding:0 24px 52px;}
+.scene-hdr{display:flex;align-items:center;gap:14px;padding:22px 0 18px;
+  border-top:1px solid var(--border);flex-wrap:wrap;}
+.scene-hdr h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--text2);}
+.scene-ctrls{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+.btn-rec{background:rgba(255,50,50,0.15);border:1.5px solid rgba(255,50,50,0.35);color:#ff6060;}
+.btn-rec:hover{background:rgba(255,50,50,0.25);}
+.btn-play{background:rgba(57,255,136,0.15);border:1.5px solid rgba(57,255,136,0.35);color:var(--accent);}
+.btn-play:hover,.btn-play.active{background:rgba(57,255,136,0.25);box-shadow:0 0 12px var(--glow);}
+.btn-stop{background:rgba(255,255,255,0.05);border:1.5px solid var(--border);color:var(--text2);}
+
+/* Scene list (horizontal scroll) */
+.scene-list-wrap{
+  position:relative;
+  overflow-x:auto;overflow-y:hidden;
+  padding-bottom:12px;
+  scrollbar-width:thin;scrollbar-color:var(--accent2) transparent;
+}
+.scene-list-wrap::-webkit-scrollbar{height:4px;}
+.scene-list-wrap::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+.scene-list{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:4px 2px 0;
+  min-height:200px;
+  width:max-content;
+}
+.scene-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;min-height:160px;
+  border:1.5px dashed rgba(255,255,255,0.1);border-radius:12px;
+  color:var(--text2);font-size:12px;letter-spacing:1px;gap:8px;
+}
+
+/* Scene card */
+.scard{
+  width:140px;flex-shrink:0;
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:10px;overflow:hidden;cursor:pointer;
+  transition:all .2s;position:relative;
+}
+.scard:hover{border-color:rgba(255,255,255,0.2);transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,0.5);}
+.scard.active{border-color:var(--accent);box-shadow:0 0 18px var(--glow);}
+.scard.active .scard-name{color:var(--accent);}
+.scard-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 8px 5px;}
+.scard-name{font-size:11px;font-weight:700;color:var(--text2);}
+.scard-del{background:none;border:none;color:rgba(255,255,255,0.2);
+  cursor:pointer;font-size:13px;padding:0 2px;line-height:1;
+  transition:color .15s;}
+.scard-del:hover{color:#ff6060;}
+
+/* Scene mini-pitch */
+.scard-pitch{position:relative;width:100%;padding-bottom:148%;overflow:hidden;
+  background:linear-gradient(180deg,#1a4d22,#1e5228);}
+.scard-pitch::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 14px,rgba(0,0,0,0.08) 14px,rgba(0,0,0,0.08) 28px);}
+.scard-cline{position:absolute;left:5%;right:5%;top:50%;height:1px;background:rgba(255,255,255,0.18);}
+.scard-ptop{position:absolute;left:50%;transform:translateX(-50%);top:4%;width:46%;height:10%;
+  border:1px solid rgba(255,255,255,0.15);}
+.scard-pbot{position:absolute;left:50%;transform:translateX(-50%);bottom:4%;width:46%;height:10%;
+  border:1px solid rgba(255,255,255,0.15);}
+.sdot{position:absolute;transform:translate(-50%,-50%);
+  width:7px;height:7px;border-radius:50%;pointer-events:none;}
+.sdot.my{background:rgba(57,255,136,0.9);box-shadow:0 0 4px var(--accent);}
+.sdot.opp{background:rgba(255,80,80,0.9);box-shadow:0 0 4px #ff5050;}
+.sdot.ball{font-size:8px;width:auto;height:auto;background:none;
+  transform:translate(-50%,-55%);}
+
+/* Active scene indicator */
+.scard-indicator{position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:var(--accent);transform:scaleX(0);transform-origin:left;
+  transition:transform 2.5s linear;}
+.scard.active .scard-indicator.playing{transform:scaleX(1);}
+
+/* Playback progress */
+.play-progress{
+  margin-top:14px;height:3px;
+  background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;
+  display:none;
+}
+.play-progress-bar{height:100%;background:var(--accent);
+  border-radius:2px;transition:width .3s linear;width:0;}
+.play-progress.visible{display:block;}
+
+/* Scene status */
+.scene-status{
+  margin-top:8px;font-size:11px;color:var(--text2);letter-spacing:1px;
+  min-height:18px;
+}
+
+/* Real player images – left / center / right */
+.ipl{
+  position:absolute;
+  bottom:0;
+  height:72%;        /* 크기 줄임 */
+  pointer-events:none;
+  z-index:1;
+  opacity:0;
+}
+.ipl img{
+  height:100%;width:auto;
+  object-fit:contain;
+  object-position:bottom center;
+  display:block;
+  /* multiply blend → 흰/밝은 배경 제거 */
+  mix-blend-mode:multiply;
+  filter:brightness(2) contrast(1.1) saturate(1.3);
+}
+.ipl.left {
+  left:2%;
+  animation:iplLeft 1s cubic-bezier(.22,1,.36,1) 0.55s forwards;
+}
+.ipl.center{
+  left:50%;transform:translateX(-50%);
+  animation:iplCenter 1s cubic-bezier(.22,1,.36,1) 0.7s forwards;
+  z-index:2;
+  height:78%;
+}
+.ipl.right {
+  right:2%;
+  animation:iplRight 1s cubic-bezier(.22,1,.36,1) 0.55s forwards;
+}
+@keyframes iplLeft  {from{opacity:0;transform:translateX(-40px) scale(.96);}to{opacity:1;transform:translateX(0) scale(1);}}
+@keyframes iplCenter{from{opacity:0;transform:translateX(-50%) translateY(28px) scale(.95);}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}}
+@keyframes iplRight {from{opacity:0;transform:translateX(40px) scale(.96);}to{opacity:1;transform:translateX(0) scale(1);}}
+
+.ipl-fade{position:absolute;inset:0;pointer-events:none;}
+.ipl.left  .ipl-fade{background:linear-gradient(90deg,#020a04 0%,rgba(2,10,4,.5) 30%,transparent 75%),linear-gradient(to top,#020a04 0%,transparent 25%);}
+.ipl.center .ipl-fade{background:linear-gradient(to top,#020a04 0%,transparent 20%);}
+.ipl.right  .ipl-fade{background:linear-gradient(270deg,#020a04 0%,rgba(2,10,4,.5) 30%,transparent 75%),linear-gradient(to top,#020a04 0%,transparent 25%);}
+.ipl-glow{
+  position:absolute;bottom:-4%;left:50%;transform:translateX(-50%);
+  width:120%;height:40%;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(57,255,136,0.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+/* ══════════════════════════════════════
+   MATCH VIEW (대전 뷰)
+══════════════════════════════════════ */
+.match-section{max-width:1160px;margin:0 auto;padding:0 24px 48px;}
+.match-hdr{display:flex;align-items:center;gap:16px;padding:22px 0 16px;
+  border-top:1px solid var(--border);flex-wrap:wrap;}
+.match-hdr h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;
+  color:var(--text2);white-space:nowrap;}
+.match-teams{display:flex;align-items:center;gap:10px;flex:1;}
+.my-tag{font-size:11px;font-weight:700;color:var(--accent);
+  background:rgba(57,255,136,0.1);border:1px solid rgba(57,255,136,0.25);
+  padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.opp-tag{font-size:11px;font-weight:700;color:#ff7070;
+  background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.25);
+  padding:4px 10px;border-radius:20px;}
+.vs-badge{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;
+  color:var(--text2);}
+.opp-name-input{background:transparent;border:none;border-bottom:1.5px solid rgba(255,100,100,0.4);
+  color:#ff7070;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;
+  padding:3px 6px;outline:none;width:90px;transition:border-color .2s;}
+.opp-name-input:focus{border-bottom-color:#ff7070;}
+.match-ctrls{display:flex;gap:7px;margin-left:auto;}
+
+.match-layout{display:grid;grid-template-columns:220px 1fr 220px;gap:14px;align-items:start;}
+
+/* Full pitch */
+.fpitch-wrap{position:relative;width:100%;padding-bottom:148%;border-radius:12px;
+  overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.6),0 0 0 1px var(--border);}
+.fpitch-inner{position:absolute;inset:0;
+  background:linear-gradient(180deg,#1a4d22 0%,#1e5228 48%,#21572b 52%,#22592d 100%);}
+.fpitch-inner::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 38px,rgba(0,0,0,0.07) 38px,rgba(0,0,0,0.07) 76px);
+  pointer-events:none;}
+
+/* Full pitch grid */
+.fpitch-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px);
+  background-size:10% 10%;}
+.fpitch-grid::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,0.15) 1px,transparent 1px);
+  background-size:10% 10%;}
+.fpitch-wrap.drag-active .fpitch-grid{
+  background-image:
+    linear-gradient(rgba(255,255,255,0.12) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.12) 1px,transparent 1px);}
+
+/* Full pitch markings */
+.fpm{position:absolute;pointer-events:none;}
+.fpm-border{inset:3.5%;border:2px solid var(--line);border-radius:2px;}
+.fpm-cline{left:3.5%;right:3.5%;top:50%;height:2px;background:var(--line);}
+.fpm-ccircle{left:50%;top:50%;transform:translate(-50%,-50%);
+  width:22%;padding-bottom:15.2%;border:2px solid var(--line);border-radius:50%;}
+.fpm-cdot{left:50%;top:50%;transform:translate(-50%,-50%);
+  width:7px;height:7px;background:var(--line);border-radius:50%;}
+.fpm-ptop{left:50%;transform:translateX(-50%);top:3.5%;width:46%;height:11%;border:2px solid var(--line);}
+.fpm-pbot{left:50%;transform:translateX(-50%);bottom:3.5%;width:46%;height:11%;border:2px solid var(--line);}
+.fpm-gtop{left:50%;transform:translateX(-50%);top:3.5%;width:24%;height:4%;border:2px solid var(--line);}
+.fpm-gbot{left:50%;transform:translateX(-50%);bottom:3.5%;width:24%;height:4%;border:2px solid var(--line);}
+/* Spot kicks */
+.fpm-spot{width:5px;height:5px;border-radius:50%;background:var(--line);
+  left:50%;transform:translateX(-50%);}
+.fpm-spot.top{top:16%;}
+.fpm-spot.bot{bottom:16%;}
+
+/* Team zone labels */
+.zone-label{position:absolute;left:50%;transform:translateX(-50%);
+  font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,0.2);pointer-events:none;white-space:nowrap;z-index:2;}
+
+/* BALL */
+.ball-dot{position:absolute;transform:translate(-50%,-50%);z-index:40;
+  cursor:grab;touch-action:none;font-size:26px;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,0.85));
+  transition:filter .15s;}
+.ball-dot:hover{filter:drop-shadow(0 4px 12px rgba(0,0,0,0.9)) drop-shadow(0 0 8px rgba(255,255,180,0.5));}
+.ball-dot.is-dragging{cursor:grabbing;z-index:60;}
+
+/* Opponent player dots */
+.pdot.opp-dot .pdot-circle{
+  background:rgba(255,90,90,0.92);
+  border-color:rgba(255,90,90,0.5);
+  color:#fff;}
+.pdot.opp-dot .pdot-circle.is-gk{background:#e87c00;border-color:rgba(232,124,0,0.6);}
+.pdot.opp-dot .pdot-circle.has-name{
+  background:linear-gradient(135deg,#d63031,#e74c3c);
+  border-color:#ff4444;}
+.pdot.opp-dot.is-dragging .pdot-circle{box-shadow:0 6px 24px rgba(0,0,0,0.7),0 0 0 2px #ff4444;}
+.pdot.opp-dot:hover .pdot-circle{box-shadow:0 4px 18px rgba(0,0,0,0.65),0 0 0 1.5px rgba(255,68,68,0.7);}
+
+/* Side panels */
+.mpanel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.mpanel-hdr{padding:11px 13px;border-bottom:1px solid var(--border);
+  font-size:11px;font-weight:700;letter-spacing:.5px;}
+.mpanel-flist{display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  padding:7px;max-height:360px;overflow-y:auto;}
+.mpanel-flist::-webkit-scrollbar{width:3px;}
+.mpanel-flist::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+.mpanel-info{padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.minfo-block{background:rgba(255,255,255,0.03);border-radius:7px;padding:9px 11px;}
+.minfo-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:4px;}
+.minfo-val{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--accent);}
+
+/* ══════════════════════════════════════
+   INTRO ANIMATION
+══════════════════════════════════════ */
+#intro{
+  position:fixed;inset:0;z-index:9999;
+  overflow:hidden;cursor:pointer;
+  background:#020a04;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+#intro.exiting{
+  animation:iExit 0.9s cubic-bezier(0.76,0,0.24,1) forwards;
+  pointer-events:none;
+}
+@keyframes iExit{
+  0%{transform:translateY(0);clip-path:inset(0 0 0 0);}
+  100%{transform:translateY(-100%);clip-path:inset(0 0 0 0);}
+}
+
+/* bg glow */
+#intro::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 110%,rgba(24,74,32,0.8) 0%,transparent 65%),
+    radial-gradient(ellipse 50% 40% at 50% 50%,rgba(57,255,136,0.04) 0%,transparent 70%);
+  animation:iglow 4s ease-in-out infinite;
+}
+@keyframes iglow{0%,100%{opacity:1;}50%{opacity:.65;}}
+
+/* scanline texture */
+#intro::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(
+    transparent 0,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px
+  );
+}
+
+/* spotlight beams */
+.ibeams{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.ibeam{
+  position:absolute;top:-5%;
+  width:clamp(120px,18vw,260px);
+  height:75vh;
+  background:linear-gradient(to bottom,rgba(255,255,210,0.07) 0%,transparent 100%);
+  filter:blur(18px);
+  transform-origin:top center;
+  opacity:0;
+  animation:beamOn 1s ease-out forwards;
+}
+.ibeam:nth-child(1){left:-8%;transform:rotate(12deg);animation-delay:.2s;}
+.ibeam:nth-child(2){left:12%;transform:rotate(6deg);animation-delay:.3s;}
+.ibeam:nth-child(3){left:32%;transform:rotate(2deg);animation-delay:.4s;}
+.ibeam:nth-child(4){right:32%;transform:rotate(-2deg);animation-delay:.4s;}
+.ibeam:nth-child(5){right:12%;transform:rotate(-6deg);animation-delay:.3s;}
+.ibeam:nth-child(6){right:-8%;transform:rotate(-12deg);animation-delay:.2s;}
+@keyframes beamOn{
+  from{opacity:0;transform-origin:top center;scaleY:0;}
+  to{opacity:1;}
+}
+
+/* pitch floor */
+.ipitch{
+  position:absolute;bottom:0;left:0;right:0;height:35%;
+  pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg,transparent 0,transparent 8%,rgba(255,255,255,0.012) 8%,rgba(255,255,255,0.012) 8.5%),
+    linear-gradient(to top,rgba(26,76,34,0.55),transparent);
+  opacity:0;
+  animation:fadeUp .8s ease-out .5s forwards;
+}
+.ipitch::before{/* center line */
+  content:'';position:absolute;top:0;left:5%;right:5%;height:1px;
+  background:rgba(255,255,255,0.1);
+}
+.ipitch::after{/* center circle arc */
+  content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);
+  width:min(160px,40vw);height:60px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  border-radius:0 0 50% 50%;
+}
+
+/* center ring */
+.iring{
+  position:absolute;
+  width:min(220px,55vw);height:min(220px,55vw);
+  border-radius:50%;
+  border:1.5px solid rgba(57,255,136,0.2);
+  box-shadow:0 0 60px rgba(57,255,136,0.08),inset 0 0 60px rgba(57,255,136,0.04);
+  opacity:0;
+  animation:ringIn .6s ease-out .7s forwards,ringPulse 3s ease-in-out 1.3s infinite;
+}
+.iring::before{
+  content:'';position:absolute;inset:-12px;
+  border-radius:50%;border:1px solid rgba(57,255,136,0.08);
+}
+@keyframes ringIn{from{transform:scale(.4);opacity:0;}to{transform:scale(1);opacity:1;}}
+@keyframes ringPulse{0%,100%{box-shadow:0 0 60px rgba(57,255,136,0.08);}50%{box-shadow:0 0 100px rgba(57,255,136,0.18);}}
+
+/* main content */
+.icontent{
+  position:relative;z-index:10;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.iball{
+  font-size:clamp(28px,4vw,42px);
+  filter:drop-shadow(0 0 16px rgba(57,255,136,0.7));
+  opacity:0;
+  animation:ballIn .7s cubic-bezier(.34,1.56,.64,1) .6s forwards;
+  margin-bottom:4px;
+}
+@keyframes ballIn{
+  from{transform:scale(0) rotate(-180deg);opacity:0;}
+  to{transform:scale(1) rotate(0deg);opacity:1;}
+}
+/* 상단 장식 라인 */
+.itop-line{
+  display:flex;align-items:center;gap:10px;margin-bottom:8px;
+  opacity:0;animation:fadeIn .4s ease-out .9s forwards;
+}
+.itop-line span{font-size:8px;letter-spacing:5px;color:rgba(57,255,136,0.45);font-weight:700;}
+.iline-bar{height:1px;width:clamp(28px,5vw,55px);background:linear-gradient(90deg,transparent,rgba(57,255,136,0.45));}
+.iline-bar.r{transform:scaleX(-1);}
+/* "2반" 그라디언트 대형 텍스트 */
+.ititle-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(100px,21vw,190px);
+  line-height:.8;letter-spacing:2px;
+  background:linear-gradient(155deg,#ffffff 0%,#6dffc0 40%,#39ff88 70%,#00c95a 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 45px rgba(57,255,136,0.55)) drop-shadow(0 4px 20px rgba(0,0,0,0.8));
+  opacity:0;animation:titleUp .7s cubic-bezier(.22,1,.36,1) 1s forwards;
+}
+/* "유나이티드" */
+.ititle-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(24px,5.5vw,52px);
+  letter-spacing:clamp(14px,4.5vw,30px);
+  color:rgba(255,255,255,0.88);line-height:1;
+  text-shadow:0 0 28px rgba(57,255,136,0.2);
+  opacity:0;animation:titleUp .65s cubic-bezier(.22,1,.36,1) 1.2s forwards;
+  padding-right:clamp(14px,4.5vw,30px); /* letter-spacing 보정 */
+}
+@keyframes titleUp{
+  from{transform:translateY(22px);opacity:0;}
+  to{transform:translateY(0);opacity:1;}
+}
+/* 구분선 + 다이아몬드 */
+.idivider{
+  position:relative;width:clamp(110px,20vw,180px);height:1px;margin:14px 0 11px;
+  background:linear-gradient(90deg,transparent,rgba(57,255,136,0.55) 50%,transparent);
+  opacity:0;animation:fadeIn .5s ease-out 1.55s forwards;
+}
+.idivider::before{
+  content:'◆';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);font-size:6px;
+  color:var(--accent);text-shadow:0 0 8px var(--accent);
+  background:#020a04;padding:0 3px;
+}
+/* 서브 텍스트 */
+.isub1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(10px,1.8vw,14px);letter-spacing:9px;
+  color:rgba(57,255,136,0.5);
+  opacity:0;animation:fadeIn .5s ease-out 1.7s forwards;
+}
+.isub2{
+  font-size:clamp(8px,1.2vw,10px);letter-spacing:4px;
+  color:rgba(238,244,240,0.22);margin-top:6px;
+  opacity:0;animation:fadeIn .5s ease-out 1.9s forwards;
+}
+/* 하단 태그라인 뱃지 */
+.itagline{
+  margin-top:16px;padding:4px 16px;
+  border:1px solid rgba(57,255,136,0.18);border-radius:20px;
+  font-size:clamp(7px,1.2vw,9px);letter-spacing:3px;
+  color:rgba(57,255,136,0.38);background:rgba(57,255,136,0.04);
+  opacity:0;animation:fadeIn .5s ease-out 2.1s forwards;
+  white-space:nowrap;
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* flicker badge */
+.ibadge-flicker{
+  position:absolute;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);
+  opacity:0;
+  animation:flicker 3s ease-in-out infinite;
+}
+.ibadge-flicker:nth-child(1){top:0;left:50%;transform:translateX(-50%);animation-delay:.2s;}
+.ibadge-flicker:nth-child(2){bottom:0;left:50%;transform:translateX(-50%);animation-delay:.9s;}
+.ibadge-flicker:nth-child(3){left:0;top:50%;transform:translateY(-50%);animation-delay:.5s;}
+.ibadge-flicker:nth-child(4){right:0;top:50%;transform:translateY(-50%);animation-delay:1.2s;}
+@keyframes flicker{0%,100%{opacity:0;}48%,52%{opacity:0;}50%{opacity:.8;box-shadow:0 0 8px var(--accent);}}
+
+/* bottom cta */
+.istart{
+  position:absolute;bottom:clamp(20px,5vh,40px);
+  font-size:clamp(9px,1.8vw,11px);letter-spacing:3px;
+  color:rgba(255,255,255,0.28);
+  opacity:0;
+  animation:fadeIn .5s ease-out 2.8s forwards,ctaPulse 2s 2.8s ease-in-out infinite;
+}
+@keyframes ctaPulse{0%,100%{opacity:.3;}50%{opacity:.65;}}
+
+/* particles */
+.iparticle{
+  position:absolute;
+  width:3px;height:3px;border-radius:50%;
+  background:var(--accent);
+  opacity:0;
+  animation:particleFly var(--dur,3s) ease-out var(--delay,2s) infinite;
+}
+@keyframes particleFly{
+  0%{transform:translate(0,0) scale(1);opacity:.7;}
+  100%{transform:translate(var(--tx,20px),var(--ty,-60px)) scale(0);opacity:0;}
+}
+
+/* Responsive */
+@media(max-width:860px){
+  .main{grid-template-columns:1fr;padding:14px;}
+  .flist{grid-template-columns:repeat(3,1fr);max-height:none;}
+  .match-layout{grid-template-columns:1fr;}
+  .fpitch-wrap{padding-bottom:148%;}
+  .match-hdr{gap:10px;}
+}
+@media(max-width:540px){
+  .flist{grid-template-columns:1fr 1fr;}
+  .mpanel-flist{grid-template-columns:1fr 1fr;}
+  header{padding:11px 14px;}
+  .match-section{padding:0 14px 32px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ INTRO ══════════ -->
+<div id="intro" onclick="skipIntro()">
+  <div class="ibeams">
+    <div class="ibeam"></div><div class="ibeam"></div><div class="ibeam"></div>
+    <div class="ibeam"></div><div class="ibeam"></div><div class="ibeam"></div>
+  </div>
+  <div class="ipitch"></div>
+  <div class="iring">
+    <div class="ibadge-flicker"></div><div class="ibadge-flicker"></div>
+    <div class="ibadge-flicker"></div><div class="ibadge-flicker"></div>
+  </div>
+  <div class="icontent">
+    <div class="iball">⚽</div>
+    <div class="itop-line">
+      <div class="iline-bar"></div>
+      <span>CLASS 2</span>
+      <div class="iline-bar r"></div>
+    </div>
+    <div class="ititle-num">2반</div>
+    <div class="ititle-name">유나이티드</div>
+    <div class="idivider"></div>
+    <div class="isub1">TACTICS BOARD</div>
+    <div class="isub2">반대항전 대비 &nbsp;·&nbsp; 2025</div>
+    <div class="itagline">⚔ &nbsp; CLASS WAR · PREPARE TO WIN &nbsp; ⚔</div>
+  </div>
+  <div class="istart">▶ &nbsp;클릭하여 시작</div>
+  <div id="iparticles"></div>
+
+  <!-- Left player -->
+  <div class="ipl left" id="iplLeft">
+    <div class="ipl-glow"></div>
+    <img src="player1.png" onerror="tryFallback(this,'player1')" alt="">
+    <div class="ipl-fade"></div>
+  </div>
+  <!-- Center player -->
+  <div class="ipl center" id="iplCenter">
+    <div class="ipl-glow"></div>
+    <img src="player2.png" onerror="tryFallback(this,'player2')" alt="">
+    <div class="ipl-fade"></div>
+  </div>
+  <!-- Right player -->
+  <div class="ipl right" id="iplRight">
+    <div class="ipl-glow"></div>
+    <img src="player3.png" onerror="tryFallback(this,'player3')" alt="">
+    <div class="ipl-fade"></div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">⚽</div>
+    <div class="logo-text">
+      <h1>2반 유나이티드</h1>
+      <p>Tactics Board · 8인제</p>
+    </div>
+  </div>
+  <div class="hbtns">
+    <button class="btn btn-ghost" onclick="resetPositions()" title="포지션만 초기화">↺ 위치</button>
+    <button class="btn btn-outline" onclick="resetAll()">초기화</button>
+    <button class="btn btn-solid" onclick="saveLineup()">저장</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- LEFT: BIG PITCH -->
+  <div class="pitch-section">
+    <div class="pitch-topbar">
+      <div>
+        <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text2);font-weight:700;">현재 전술</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-top:3px;">
+          <div class="formation-title" id="bigFName">1-3-3-1</div>
+          <span class="ftype-badge" id="bigFType">ATTACK</span>
+        </div>
+        <div class="stats-bar" id="statsBar"></div>
+      </div>
+    </div>
+
+    <div class="pitch-wrap" id="pitchWrap">
+      <div class="pitch-inner" id="pitchInner">
+        <!-- Grid overlay -->
+        <div class="pitch-grid"></div>
+        <!-- Markings -->
+        <div class="pm pm-border"></div>
+        <div class="pm pm-cline"></div>
+        <div class="pm pm-ccircle"><div class="pm pm-cdot"></div></div>
+        <div class="pm pm-ptop"></div>
+        <div class="pm pm-pbot"></div>
+        <div class="pm pm-gtop"></div>
+        <div class="pm pm-gbot"></div>
+        <!-- Players -->
+        <div id="bigPlayers"></div>
+        <div class="drag-hint">드래그로 선수 이동 · 클릭으로 이름 편집</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div>
+      <div class="panel-label">포메이션 선택</div>
+      <div class="flist" id="flist"></div>
+    </div>
+    <div class="roster-panel">
+      <div class="roster-hdr">
+        <h3>📋 선수 명단</h3>
+        <button class="btn btn-outline" style="padding:4px 11px;font-size:11px;" onclick="openAddPlayer()">+ 추가</button>
+      </div>
+      <div class="rlist" id="rlist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MATCH VIEW ══════════ -->
+<div class="match-section">
+  <div class="match-hdr">
+    <h2>⚔ 대전 뷰</h2>
+    <div class="match-teams">
+      <span class="my-tag">🟢 2반 유나이티드</span>
+      <span class="vs-badge">VS</span>
+      <span class="opp-tag">🔴 <input id="oppTeamName" class="opp-name-input" value="상대팀" maxlength="12" oninput="document.getElementById('oppZoneLabel').textContent=this.value"></span>
+    </div>
+    <div class="match-ctrls">
+      <button class="btn btn-ghost" onclick="resetMatchPositions()">↺ 위치 초기화</button>
+      <button class="btn btn-ghost" onclick="centerBall()">⚽ 공 센터</button>
+    </div>
+  </div>
+
+  <div class="match-layout">
+
+    <!-- Opponent panel -->
+    <div class="mpanel">
+      <div class="mpanel-hdr" style="color:#ff7070;">🔴 상대팀 포메이션</div>
+      <div class="mpanel-flist" id="oppFlist"></div>
+    </div>
+
+    <!-- Full pitch -->
+    <div class="fpitch-wrap" id="fpitchWrap">
+      <div class="fpitch-inner" id="fpitchInner">
+        <div class="fpitch-grid"></div>
+        <!-- Markings -->
+        <div class="fpm fpm-border"></div>
+        <div class="fpm fpm-cline"></div>
+        <div class="fpm fpm-ccircle"><div class="fpm fpm-cdot"></div></div>
+        <div class="fpm fpm-ptop"></div>
+        <div class="fpm fpm-pbot"></div>
+        <div class="fpm fpm-gtop"></div>
+        <div class="fpm fpm-gbot"></div>
+        <div class="fpm fpm-spot top"></div>
+        <div class="fpm fpm-spot bot"></div>
+        <!-- Zone labels -->
+        <div class="zone-label" id="oppZoneLabel" style="top:2%;">상대팀</div>
+        <div class="zone-label" style="bottom:2%;">2반 유나이티드</div>
+        <!-- Players -->
+        <div id="oppDots"></div>
+        <div id="matchMyDots"></div>
+        <!-- Ball -->
+        <div class="ball-dot" id="soccerBall" onpointerdown="startBallDrag(event)">⚽</div>
+      </div>
+    </div>
+
+    <!-- My team panel -->
+    <div class="mpanel">
+      <div class="mpanel-hdr" style="color:var(--accent);">🟢 내팀 정보</div>
+      <div class="mpanel-info">
+        <div class="minfo-block">
+          <div class="minfo-label">포메이션</div>
+          <div class="minfo-val" id="matchMyFname">-</div>
+        </div>
+        <div class="minfo-block">
+          <div class="minfo-label">상대 포메이션</div>
+          <div class="minfo-val" id="matchOppFname" style="color:#ff7070;">-</div>
+        </div>
+        <div class="minfo-block" style="font-size:10px;color:var(--text2);line-height:1.8;">
+          <div>🟢 초록 = 내 팀</div>
+          <div>🔴 빨강 = 상대팀</div>
+          <div>⚽ 드래그로 공 이동</div>
+          <div>클릭으로 이름 편집</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ SCENE EDITOR ══════════ -->
+<div class="scene-section">
+  <div class="scene-hdr">
+    <h2>🎬 장면 만들기</h2>
+    <div class="scene-ctrls">
+      <button class="btn btn-rec" onclick="captureScene()">📸 장면 추가</button>
+      <button class="btn btn-play" id="playBtn" onclick="togglePlay()">▶ 재생</button>
+      <button class="btn btn-stop" onclick="stopPlay()">⏹ 정지</button>
+      <button class="btn btn-ghost" onclick="clearScenes()">🗑 전체삭제</button>
+    </div>
+  </div>
+  <div class="scene-list-wrap">
+    <div class="scene-list" id="sceneList"></div>
+  </div>
+  <div class="play-progress" id="playProgress">
+    <div class="play-progress-bar" id="playProgressBar"></div>
+  </div>
+  <div class="scene-status" id="sceneStatus"></div>
+</div>
+
+<!-- Modal -->
+<div class="moverlay" id="moverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h3 id="mTitle">선수 배치</h3>
+    <p id="mSub">포지션에 선수를 배치하세요</p>
+    <div class="mfield">
+      <label>선수 이름</label>
+      <input type="text" id="mName" placeholder="이름 입력..." maxlength="8">
+    </div>
+    <div class="mfield">
+      <label>포지션</label>
+      <select id="mPos">
+        <option value="GK">GK - 골키퍼</option>
+        <option value="SW">SW - 스위퍼</option>
+        <option value="CB">CB - 센터백</option>
+        <option value="LB">LB - 왼쪽 수비</option>
+        <option value="RB">RB - 오른쪽 수비</option>
+        <option value="WB">WB - 윙백</option>
+        <option value="CDM">CDM - 수비형 미드</option>
+        <option value="CM">CM - 중앙 미드</option>
+        <option value="CAM">CAM - 공격형 미드</option>
+        <option value="LM">LM - 왼쪽 미드</option>
+        <option value="RM">RM - 오른쪽 미드</option>
+        <option value="LW">LW - 왼쪽 윙</option>
+        <option value="RW">RW - 오른쪽 윙</option>
+        <option value="SS">SS - 세컨드 스트라이커</option>
+        <option value="CF">CF - 센터 포워드</option>
+        <option value="ST">ST - 스트라이커</option>
+      </select>
+    </div>
+    <div class="mbtns">
+      <button class="btn btn-danger" id="mClearBtn" onclick="clearSlot()">제거</button>
+      <button class="btn btn-outline" onclick="closeModal()">취소</button>
+      <button class="btn btn-solid" onclick="confirmModal()">확인</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// INTRO
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+  // Spawn particles after 2s
+  setTimeout(()=>{
+    const container = document.getElementById('iparticles');
+    if(!container) return;
+    const colors = ['#39ff88','#00c95a','#ffffff','#f5c842'];
+    for(let i=0;i<28;i++){
+      const p = document.createElement('div');
+      p.className = 'iparticle';
+      const angle = (i/28)*360;
+      const dist  = 80 + Math.random()*120;
+      const tx = Math.cos(angle*Math.PI/180)*dist;
+      const ty = Math.sin(angle*Math.PI/180)*dist - 40;
+      p.style.cssText = `
+        left:50%;top:50%;
+        background:${colors[i%colors.length]};
+        --tx:${tx}px;--ty:${ty}px;
+        --dur:${1.5+Math.random()*1.5}s;
+        --delay:${0.1+Math.random()*0.6}s;
+        width:${2+Math.random()*3}px;
+        height:${2+Math.random()*3}px;
+        margin-left:-1px;margin-top:-1px;
+        box-shadow:0 0 4px currentColor;
+      `;
+      container.appendChild(p);
+    }
+  }, 2000);
+
+  // Auto skip after 5s
+  let skipped = false;
+  const autoTimer = setTimeout(()=>skipIntro(), 5200);
+
+  // Try .jpg if .png fails, then hide the slot if both fail
+  window.tryFallback = function(img, name){
+    if(img.src.endsWith('.png')){
+      img.src = name + '.jpg';
+    } else {
+      img.parentElement.style.display = 'none';
+    }
+  };
+
+  window.skipIntro = function(){
+    if(skipped) return;
+    skipped = true;
+    clearTimeout(autoTimer);
+    const intro = document.getElementById('intro');
+    if(!intro) return;
+    intro.classList.add('exiting');
+    setTimeout(()=>{ intro.style.display='none'; }, 900);
+  };
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// FORMATIONS  (8 players: GK + 7)
+// x: 0-100 left-right, y: 0-100 top(attack end) to bottom(GK end)
+// ═══════════════════════════════════════════════════════════════════
+const FDATA = [
+  {
+    id:'f1',name:'1-3-3-1',type:'ATTACK',color:'#ff6b35',
+    desc:'공격적 중원 장악',def:3,mid:3,fwd:1,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:18,y:67},{r:'CB',pos:'CB',x:50,y:67},{r:'RB',pos:'RB',x:82,y:67},
+      {r:'LM',pos:'LM',x:18,y:46},{r:'CM',pos:'CM',x:50,y:46},{r:'RM',pos:'RM',x:82,y:46},
+      {r:'ST',pos:'ST',x:50,y:20},
+    ]
+  },
+  {
+    id:'f2',name:'1-2-3-2',type:'ATTACK',color:'#ff6b35',
+    desc:'쌍 스트라이커',def:2,mid:3,fwd:2,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:30,y:70},{r:'RB',pos:'RB',x:70,y:70},
+      {r:'LM',pos:'LM',x:18,y:49},{r:'CM',pos:'CM',x:50,y:49},{r:'RM',pos:'RM',x:82,y:49},
+      {r:'LS',pos:'ST',x:34,y:21},{r:'RS',pos:'ST',x:66,y:21},
+    ]
+  },
+  {
+    id:'f3',name:'1-3-1-3',type:'ATTACK',color:'#ff4444',
+    desc:'피벗 원톱 + 쓰리백',def:3,mid:1,fwd:3,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:18,y:68},{r:'CB',pos:'CB',x:50,y:68},{r:'RB',pos:'RB',x:82,y:68},
+      {r:'CM',pos:'CDM',x:50,y:50},
+      {r:'LW',pos:'LW',x:18,y:22},{r:'ST',pos:'ST',x:50,y:20},{r:'RW',pos:'RW',x:82,y:22},
+    ]
+  },
+  {
+    id:'f4',name:'1-3-2-2',type:'BALANCED',color:'#3d8eff',
+    desc:'균형잡힌 전술',def:3,mid:2,fwd:2,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:18,y:67},{r:'CB',pos:'CB',x:50,y:67},{r:'RB',pos:'RB',x:82,y:67},
+      {r:'LM',pos:'LM',x:32,y:47},{r:'RM',pos:'RM',x:68,y:47},
+      {r:'LW',pos:'LW',x:28,y:21},{r:'RW',pos:'RW',x:72,y:21},
+    ]
+  },
+  {
+    id:'f5',name:'1-2-4-1',type:'MIDFIELD',color:'#a78bfa',
+    desc:'미드필드 밀집',def:2,mid:4,fwd:1,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:28,y:71},{r:'RB',pos:'RB',x:72,y:71},
+      {r:'LM',pos:'LM',x:14,y:49},{r:'CL',pos:'CM',x:36,y:49},{r:'CR',pos:'CM',x:64,y:49},{r:'RM',pos:'RM',x:86,y:49},
+      {r:'ST',pos:'ST',x:50,y:20},
+    ]
+  },
+  {
+    id:'f6',name:'1-4-2-1',type:'DEFEND',color:'#6ee7b7',
+    desc:'단단한 수비 블록',def:4,mid:2,fwd:1,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:14,y:68},{r:'LCB',pos:'CB',x:37,y:68},{r:'RCB',pos:'CB',x:63,y:68},{r:'RB',pos:'RB',x:86,y:68},
+      {r:'CM',pos:'CM',x:34,y:47},{r:'CM',pos:'CM',x:66,y:47},
+      {r:'ST',pos:'ST',x:50,y:20},
+    ]
+  },
+  {
+    id:'f7',name:'1-2-2-3',type:'ATTACK',color:'#ff6b35',
+    desc:'트리플 공격 라인',def:2,mid:2,fwd:3,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:30,y:72},{r:'RB',pos:'RB',x:70,y:72},
+      {r:'LM',pos:'LM',x:32,y:51},{r:'RM',pos:'RM',x:68,y:51},
+      {r:'LW',pos:'LW',x:16,y:20},{r:'ST',pos:'ST',x:50,y:18},{r:'RW',pos:'RW',x:84,y:20},
+    ]
+  },
+  {
+    id:'f8',name:'1-1-3-3',type:'ULTRA ATK',color:'#ff2222',
+    desc:'초공격 압박 전술',def:1,mid:3,fwd:3,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'SW',pos:'SW',x:50,y:73},
+      {r:'LM',pos:'LM',x:20,y:52},{r:'CM',pos:'CM',x:50,y:52},{r:'RM',pos:'RM',x:80,y:52},
+      {r:'LW',pos:'LW',x:18,y:21},{r:'ST',pos:'ST',x:50,y:18},{r:'RW',pos:'RW',x:82,y:21},
+    ]
+  },
+  {
+    id:'f9',name:'1-1-5-1',type:'MIDFIELD',color:'#a78bfa',
+    desc:'미드필드 초밀집',def:1,mid:5,fwd:1,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'CB',pos:'CB',x:50,y:74},
+      {r:'LM',pos:'LM',x:10,y:50},{r:'CL',pos:'CM',x:30,y:50},{r:'CM',pos:'CM',x:50,y:50},{r:'CR',pos:'CM',x:70,y:50},{r:'RM',pos:'RM',x:90,y:50},
+      {r:'ST',pos:'ST',x:50,y:20},
+    ]
+  },
+  {
+    id:'f10',name:'1-4-3',type:'WING',color:'#f5c842',
+    desc:'4백 + 윙 공격',def:4,mid:0,fwd:3,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:14,y:67},{r:'LCB',pos:'CB',x:37,y:67},{r:'RCB',pos:'CB',x:63,y:67},{r:'RB',pos:'RB',x:86,y:67},
+      {r:'LW',pos:'LW',x:16,y:30},{r:'ST',pos:'ST',x:50,y:20},{r:'RW',pos:'RW',x:84,y:30},
+    ]
+  },
+  {
+    id:'f11',name:'1-2-1-4',type:'DIAMOND',color:'#ff9f43',
+    desc:'다이아몬드 미드',def:2,mid:1,fwd:4,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LB',pos:'LB',x:28,y:71},{r:'RB',pos:'RB',x:72,y:71},
+      {r:'CM',pos:'CAM',x:50,y:53},
+      {r:'LL',pos:'LW',x:12,y:22},{r:'LS',pos:'ST',x:36,y:19},{r:'RS',pos:'ST',x:64,y:19},{r:'RR',pos:'RW',x:88,y:22},
+    ]
+  },
+  {
+    id:'f12',name:'1-5-2',type:'DEFEND',color:'#6ee7b7',
+    desc:'초수비 5백 전술',def:5,mid:0,fwd:2,
+    p:[
+      {r:'GK',pos:'GK',x:50,y:87},
+      {r:'LWB',pos:'WB',x:8,y:64},{r:'LCB',pos:'CB',x:27,y:64},{r:'CB',pos:'CB',x:50,y:64},{r:'RCB',pos:'CB',x:73,y:64},{r:'RWB',pos:'WB',x:92,y:64},
+      {r:'LS',pos:'ST',x:34,y:24},{r:'RS',pos:'ST',x:66,y:24},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let curFid = 'f1';
+let assignments = {};   // idx -> {name, position}
+let positions = [];     // [{x,y}] current drag positions
+let roster = [];
+let modalMode = '';
+let modalSlot = null;
+let modalRosterIdx = null;
+
+// Drag state
+let dragState = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+function init(){
+  load();
+  renderFlist();
+  rebuildPitch();
+  renderRoster();
+}
+
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem('ykfc2_v2')||'{}');
+    curFid = d.fid||'f1';
+    assignments = d.assignments||{};
+    positions = d.positions||[];
+    roster = d.roster||[];
+  }catch(e){}
+}
+
+function save(){
+  localStorage.setItem('ykfc2_v2',JSON.stringify({fid:curFid,assignments,positions,roster}));
+}
+
+function getFormation(id){ return FDATA.find(f=>f.id===id); }
+
+// ═══════════════════════════════════════════════════════════════════
+// AUTO POSITION DETECTION  (x,y = 0-100%)
+// ═══════════════════════════════════════════════════════════════════
+function detectPos(x, y, isGK){
+  if(isGK) return 'GK';
+
+  const wL = x < 22;   // wide left
+  const L  = x < 35;   // left
+  const wR = x > 78;   // wide right
+  const R  = x > 65;   // right
+  // C = neither L nor R
+
+  if(y > 78){
+    // own penalty area
+    if(L) return 'LB'; if(R) return 'RB';
+    return 'SW';
+  }
+  if(y > 63){
+    // defense line
+    if(wL) return 'LWB'; if(wR) return 'RWB';
+    if(L)  return 'LB';  if(R)  return 'RB';
+    return 'CB';
+  }
+  if(y > 52){
+    // defensive midfield
+    if(wL) return 'LDM'; if(wR) return 'RDM';
+    if(L)  return 'LCM'; if(R)  return 'RCM';
+    return 'CDM';
+  }
+  if(y > 40){
+    // central midfield
+    if(wL) return 'LM';  if(wR) return 'RM';
+    if(L)  return 'LCM'; if(R)  return 'RCM';
+    return 'CM';
+  }
+  if(y > 28){
+    // attacking midfield
+    if(wL) return 'LW';  if(wR) return 'RW';
+    if(L)  return 'LAM'; if(R)  return 'RAM';
+    return 'CAM';
+  }
+  // forward zone
+  if(wL) return 'LW'; if(wR) return 'RW';
+  if(L)  return 'LF'; if(R)  return 'RF';
+  return 'ST';
+}
+
+function calcFormationName(){
+  const f = getFormation(curFid);
+  const pos = getPositions();
+  let def=0, mid=0, fwd=0;
+  f.p.forEach((p,i)=>{
+    if(p.pos==='GK') return;
+    const y = (positions[i]||{y:p.y}).y;
+    if(y > 63) def++;
+    else if(y > 28) mid++;
+    else fwd++;
+  });
+  let parts = [1, def];
+  if(mid>0) parts.push(mid);
+  if(fwd>0) parts.push(fwd);
+  return parts.join('-');
+}
+
+function updateFormationDisplay(){
+  const f = getFormation(curFid);
+  const name = calcFormationName();
+  document.getElementById('bigFName').textContent = name;
+
+  const pos = getPositions();
+  let def=0, mid=0, fwd=0;
+  f.p.forEach((p,i)=>{
+    if(p.pos==='GK') return;
+    const y = (positions[i]||{y:p.y}).y;
+    if(y > 63) def++;
+    else if(y > 28) mid++;
+    else fwd++;
+  });
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-chip"><div class="stat-dot" style="background:#3d8eff"></div><span>수비 ${def}</span></div>
+    <div class="stat-chip"><div class="stat-dot" style="background:#a78bfa"></div><span>미드 ${mid}</span></div>
+    <div class="stat-chip"><div class="stat-dot" style="background:#ff6b35"></div><span>공격 ${fwd}</span></div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FORMATION LIST
+// ═══════════════════════════════════════════════════════════════════
+function renderFlist(){
+  document.getElementById('flist').innerHTML = FDATA.map(f=>`
+    <div class="fcard ${f.id===curFid?'active':''}" onclick="selectFormation('${f.id}')">
+      ${f.id===curFid?'<div class="active-tag">적용중</div>':''}
+      <div class="fcard-name">${f.name}</div>
+      <div class="fcard-desc"><span class="ftype-dot" style="background:${f.color}"></span>${f.type}</div>
+      <div class="mpitch">
+        <div class="mpitch-border"></div>
+        <div class="mpitch-cline"></div>
+        ${f.p.map(p=>`<div class="mdot ${p.pos==='GK'?'gk':''}" style="left:${p.x}%;top:${p.y}%"></div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectFormation(id){
+  curFid = id;
+  assignments = {};
+  positions = [];
+  save();
+  renderFlist();
+  rebuildPitch();
+  showToast('포메이션: '+getFormation(id).name);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BIG PITCH
+// ═══════════════════════════════════════════════════════════════════
+function getPositions(){
+  const f = getFormation(curFid);
+  return f.p.map((p,i) => positions[i] || {x:p.x, y:p.y});
+}
+
+function rebuildPitch(){
+  const f = getFormation(curFid);
+  const badge = document.getElementById('bigFType');
+  badge.textContent = f.type;
+  badge.style.background = f.color;
+  updateFormationDisplay();
+
+  const pos = getPositions();
+  const container = document.getElementById('bigPlayers');
+  container.innerHTML = f.p.map((p,i)=>{
+    const a = assignments[i];
+    const isGK = p.pos==='GK';
+    const cx = pos[i].x, cy = pos[i].y;
+    const autoPos = detectPos(cx, cy, isGK);
+    const displayPos = a ? a.position : autoPos;
+    return `
+      <div class="pdot" id="pd${i}" style="left:${cx}%;top:${cy}%"
+           data-idx="${i}"
+           onpointerdown="startDrag(event,${i})">
+        <div class="pdot-circle ${isGK?'is-gk':''} ${a?'has-name':''}">
+          <span class="pdot-name">${a ? a.name.substring(0,6) : autoPos}</span>
+          ${a?`<span class="pdot-pos">${displayPos}</span>`:''}
+        </div>
+        <div class="pdot-label" id="pdlabel${i}">${displayPos}</div>
+      </div>
+    `;
+  }).join('');
+
+  attachDragListeners();
+}
+
+function updateDotPos(idx){
+  const el = document.getElementById('pd'+idx);
+  if(!el) return;
+  const pos = getPositions();
+  const cx = pos[idx].x, cy = pos[idx].y;
+  el.style.left = cx+'%';
+  el.style.top  = cy+'%';
+
+  // Update auto-detected position label
+  const f = getFormation(curFid);
+  const isGK = f.p[idx].pos === 'GK';
+  const a = assignments[idx];
+  const autoPos = detectPos(cx, cy, isGK);
+  const displayPos = a ? a.position : autoPos;
+
+  // Update circle text (only when no name assigned)
+  const nameEl = el.querySelector('.pdot-name');
+  if(nameEl && !a) nameEl.textContent = autoPos;
+
+  // Update label below dot
+  const labelEl = document.getElementById('pdlabel'+idx);
+  if(labelEl) labelEl.textContent = displayPos;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DRAG & DROP
+// ═══════════════════════════════════════════════════════════════════
+function attachDragListeners(){
+  // Pointer events added via onpointerdown inline above
+}
+
+function startDrag(e, idx){
+  e.preventDefault();
+  e.stopPropagation();
+  dragState = {
+    idx,
+    startX: e.clientX,
+    startY: e.clientY,
+    moved: false
+  };
+  const el = document.getElementById('pd'+idx);
+  if(el) el.classList.add('is-dragging');
+
+  document.addEventListener('pointermove', onDragMove, {passive:false});
+  document.addEventListener('pointerup', onDragEnd);
+  document.addEventListener('pointercancel', onDragEnd);
+}
+
+function onDragMove(e){
+  if(!dragState) return;
+  e.preventDefault();
+  const dx = e.clientX - dragState.startX;
+  const dy = e.clientY - dragState.startY;
+
+  if(!dragState.moved && Math.sqrt(dx*dx+dy*dy) > 6){
+    dragState.moved = true;
+    document.getElementById('pitchWrap').classList.add('drag-active');
+  }
+
+  if(dragState.moved){
+    const pitch = document.getElementById('pitchInner');
+    const r = pitch.getBoundingClientRect();
+    const nx = Math.max(2, Math.min(98, (e.clientX - r.left) / r.width * 100));
+    const ny = Math.max(2, Math.min(98, (e.clientY - r.top) / r.height * 100));
+
+    if(!positions[dragState.idx]) positions[dragState.idx] = {};
+    positions[dragState.idx] = {x: nx, y: ny};
+    updateDotPos(dragState.idx);
+    updateFormationDisplay();
+  }
+}
+
+function onDragEnd(e){
+  document.removeEventListener('pointermove', onDragMove);
+  document.removeEventListener('pointerup', onDragEnd);
+  document.removeEventListener('pointercancel', onDragEnd);
+  document.getElementById('pitchWrap').classList.remove('drag-active');
+
+  if(!dragState) return;
+  const {idx, moved} = dragState;
+  dragState = null;
+
+  const el = document.getElementById('pd'+idx);
+  if(el) el.classList.remove('is-dragging');
+
+  if(!moved){
+    // It was a click → open modal
+    openSlotModal(idx);
+  } else {
+    save();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════════════
+function openSlotModal(idx){
+  modalMode = 'slot';
+  modalSlot = idx;
+  const f = getFormation(curFid);
+  const p = f.p[idx];
+  const a = assignments[idx];
+  document.getElementById('mTitle').textContent = `포지션: ${p.r}`;
+  document.getElementById('mSub').textContent = '선수 이름과 포지션을 입력하세요';
+  document.getElementById('mName').value = a ? a.name : '';
+  document.getElementById('mPos').value = a ? a.position : p.pos;
+  document.getElementById('mClearBtn').style.display = a ? '' : 'none';
+  document.getElementById('mClearBtn').textContent = '제거';
+  document.getElementById('moverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('mName').focus(), 100);
+}
+
+function openAddPlayer(){
+  modalMode = 'add';
+  document.getElementById('mTitle').textContent = '선수 추가';
+  document.getElementById('mSub').textContent = '명단에 선수를 추가합니다';
+  document.getElementById('mName').value = '';
+  document.getElementById('mPos').value = 'CM';
+  document.getElementById('mClearBtn').style.display = 'none';
+  document.getElementById('moverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('mName').focus(), 100);
+}
+
+function openEditRoster(idx){
+  modalMode = 'editRoster';
+  modalRosterIdx = idx;
+  const p = roster[idx];
+  document.getElementById('mTitle').textContent = '선수 수정';
+  document.getElementById('mSub').textContent = '선수 정보를 변경합니다';
+  document.getElementById('mName').value = p.name;
+  document.getElementById('mPos').value = p.pos;
+  document.getElementById('mClearBtn').style.display = '';
+  document.getElementById('mClearBtn').textContent = '삭제';
+  document.getElementById('moverlay').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('moverlay').classList.remove('open');
+}
+function closeModalOutside(e){
+  if(e.target===document.getElementById('moverlay')) closeModal();
+}
+
+function clearSlot(){
+  if(modalMode==='slot'){
+    delete assignments[modalSlot];
+    save(); rebuildPitch();
+    showToast('선수 제거됨');
+  } else if(modalMode==='editRoster'){
+    roster.splice(modalRosterIdx,1);
+    save(); renderRoster();
+    showToast('선수 삭제됨');
+  }
+  closeModal();
+}
+
+function confirmModal(){
+  const name = document.getElementById('mName').value.trim();
+  const pos = document.getElementById('mPos').value;
+  if(!name){ showToast('이름을 입력하세요'); return; }
+  if(modalMode==='slot'){
+    assignments[modalSlot] = {name, position:pos};
+    save(); rebuildPitch();
+    showToast(`${name} 배치 완료!`);
+  } else if(modalMode==='add'){
+    roster.push({name, pos});
+    save(); renderRoster();
+    showToast(`${name} 추가됨`);
+  } else if(modalMode==='editRoster'){
+    roster[modalRosterIdx] = {name, pos};
+    save(); renderRoster();
+    showToast(`${name} 수정됨`);
+  }
+  closeModal();
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('moverlay').classList.contains('open')) confirmModal();
+  if(e.key==='Escape') closeModal();
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// ROSTER
+// ═══════════════════════════════════════════════════════════════════
+function renderRoster(){
+  const el = document.getElementById('rlist');
+  if(!roster.length){
+    el.innerHTML='<div style="text-align:center;padding:18px;color:var(--text2);font-size:11px;">선수가 없습니다<br>+ 추가 버튼을 눌러주세요</div>';
+    return;
+  }
+  el.innerHTML = roster.map((p,i)=>`
+    <div class="ritem" onclick="openEditRoster(${i})">
+      <div class="rnum">${i+1}</div>
+      <div style="flex:1"><div class="rname">${p.name}</div><div class="rpos">${p.pos}</div></div>
+      <div class="redit">✏️</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════════════
+function resetPositions(){
+  positions = [];
+  save(); rebuildPitch();
+  showToast('위치 초기화됨');
+}
+
+function resetAll(){
+  if(!confirm('모든 배치와 위치를 초기화할까요?')) return;
+  assignments = {};
+  positions = [];
+  save(); rebuildPitch();
+  showToast('전체 초기화 완료');
+}
+
+function saveLineup(){
+  save();
+  showToast('💾 저장 완료!');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════
+let toastTm;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTm);
+  toastTm = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MATCH VIEW STATE
+// ═══════════════════════════════════════════════════════════════════
+let oppFid = 'f6';
+let matchMyPos  = [];   // [{x,y}] full-pitch coords
+let matchOppPos = [];
+let ballPos = {x:50, y:50};
+let oppAssignments = {};
+let matchDragState = null;
+let ballDragState  = false;
+
+// ─── coordinate helpers ───────────────────────────────────────────
+// tactic y (0=attack, 100=GK) → full-pitch bottom half %
+function toMyY(ty){ return 53 + ty * 0.39; }
+// tactic y → full-pitch top half % (mirrored)
+function toOppY(ty){ return 47 - ty * 0.39; }
+
+function getMatchMyDefaults(){
+  const f = getFormation(curFid);
+  return f.p.map((p,i)=>{
+    const tp = positions[i]||{x:p.x, y:p.y};
+    return {x:tp.x, y:toMyY(tp.y)};
+  });
+}
+function getMatchOppDefaults(){
+  const f = getFormation(oppFid);
+  return f.p.map(p=>({x:p.x, y:toOppY(p.y)}));
+}
+function getMatchMyPos(){ return getFormation(curFid).p.map((_,i)=>matchMyPos[i]||getMatchMyDefaults()[i]); }
+function getMatchOppPos(){ return getFormation(oppFid).p.map((_,i)=>matchOppPos[i]||getMatchOppDefaults()[i]); }
+
+// ─── save/load match state ────────────────────────────────────────
+function saveMatch(){
+  const extra = JSON.parse(localStorage.getItem('ykfc2_match')||'{}');
+  localStorage.setItem('ykfc2_match', JSON.stringify({
+    ...extra, oppFid, matchMyPos, matchOppPos, ballPos, oppAssignments,
+    oppTeamName: document.getElementById('oppTeamName').value
+  }));
+}
+function loadMatch(){
+  try{
+    const d = JSON.parse(localStorage.getItem('ykfc2_match')||'{}');
+    oppFid         = d.oppFid||'f6';
+    matchMyPos     = d.matchMyPos||[];
+    matchOppPos    = d.matchOppPos||[];
+    ballPos        = d.ballPos||{x:50,y:50};
+    oppAssignments = d.oppAssignments||{};
+    if(d.oppTeamName) document.getElementById('oppTeamName').value = d.oppTeamName;
+    document.getElementById('oppZoneLabel').textContent = document.getElementById('oppTeamName').value;
+  }catch(e){}
+}
+
+// ─── render opponent formation list ──────────────────────────────
+function renderOppFlist(){
+  document.getElementById('oppFlist').innerHTML = FDATA.map(f=>`
+    <div class="fcard ${f.id===oppFid?'active':''}" onclick="selectOppFormation('${f.id}')" style="${f.id===oppFid?'border-color:#ff7070;background:rgba(255,80,80,0.08);':''}">
+      ${f.id===oppFid?'<div class="active-tag" style="background:#ff7070;">적용중</div>':''}
+      <div class="fcard-name" style="${f.id===oppFid?'color:#ff7070;':''}">${f.name}</div>
+      <div class="fcard-desc"><span class="ftype-dot" style="background:${f.color}"></span>${f.type}</div>
+      <div class="mpitch">
+        <div class="mpitch-border"></div><div class="mpitch-cline"></div>
+        ${f.p.map(p=>`<div class="mdot ${p.pos==='GK'?'gk':''}" style="left:${p.x}%;top:${p.y}%;background:${p.pos==='GK'?'':'rgba(255,90,90,0.9)'}"></div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function selectOppFormation(id){
+  oppFid = id;
+  matchOppPos = [];
+  saveMatch();
+  renderOppFlist();
+  renderMatchView();
+  document.getElementById('matchOppFname').textContent = getFormation(id).name;
+  showToast('상대 포메이션: '+getFormation(id).name);
+}
+
+// ─── render full pitch ────────────────────────────────────────────
+function renderMatchView(){
+  const myF   = getFormation(curFid);
+  const oppF  = getFormation(oppFid);
+  const myPos  = getMatchMyPos();
+  const oppPos = getMatchOppPos();
+
+  // My team dots
+  document.getElementById('matchMyDots').innerHTML = myF.p.map((p,i)=>{
+    const a = assignments[i];
+    const cx = myPos[i].x, cy = myPos[i].y;
+    const isGK = p.pos==='GK';
+    const autoPos = detectPos(cx, cy>50 ? (cy-53)/0.39 : 50, isGK);
+    return `<div class="pdot" id="mpd${i}" style="left:${cx}%;top:${cy}%"
+        onpointerdown="startMatchDrag(event,'my',${i})">
+      <div class="pdot-circle ${isGK?'is-gk':''} ${a?'has-name':''}">
+        <span class="pdot-name">${a?a.name.substring(0,6):p.r}</span>
+        ${a?`<span class="pdot-pos">${a.position}</span>`:''}
+      </div>
+      <div class="pdot-label" id="mpdlabel${i}">${a?a.position:p.r}</div>
+    </div>`;
+  }).join('');
+
+  // Opponent dots
+  document.getElementById('oppDots').innerHTML = oppF.p.map((p,i)=>{
+    const a = oppAssignments[i];
+    const cx = oppPos[i].x, cy = oppPos[i].y;
+    const isGK = p.pos==='GK';
+    return `<div class="pdot opp-dot" id="opd${i}" style="left:${cx}%;top:${cy}%"
+        onpointerdown="startMatchDrag(event,'opp',${i})">
+      <div class="pdot-circle ${isGK?'is-gk':''} ${a?'has-name':''}">
+        <span class="pdot-name">${a?a.name.substring(0,6):p.r}</span>
+        ${a?`<span class="pdot-pos">${a.position}</span>`:''}
+      </div>
+      <div class="pdot-label" id="opdlabel${i}">${a?a.position:p.r}</div>
+    </div>`;
+  }).join('');
+
+  // Ball
+  const ball = document.getElementById('soccerBall');
+  ball.style.left = ballPos.x+'%';
+  ball.style.top  = ballPos.y+'%';
+
+  // Info panels
+  document.getElementById('matchMyFname').textContent  = calcFormationName();
+  document.getElementById('matchOppFname').textContent = oppF.name;
+}
+
+// ─── match drag ───────────────────────────────────────────────────
+function startMatchDrag(e, team, idx){
+  e.preventDefault(); e.stopPropagation();
+  matchDragState = {team, idx, startX:e.clientX, startY:e.clientY, moved:false};
+  const el = document.getElementById(team==='my'?`mpd${idx}`:`opd${idx}`);
+  if(el) el.classList.add('is-dragging');
+  document.addEventListener('pointermove', onMatchMove, {passive:false});
+  document.addEventListener('pointerup',   onMatchEnd);
+  document.addEventListener('pointercancel', onMatchEnd);
+}
+
+function onMatchMove(e){
+  if(!matchDragState) return;
+  e.preventDefault();
+  const dx = e.clientX-matchDragState.startX, dy = e.clientY-matchDragState.startY;
+  if(!matchDragState.moved && Math.sqrt(dx*dx+dy*dy)>6){
+    matchDragState.moved = true;
+    document.getElementById('fpitchWrap').classList.add('drag-active');
+  }
+  if(!matchDragState.moved) return;
+  const r = document.getElementById('fpitchInner').getBoundingClientRect();
+  const nx = Math.max(2, Math.min(98,(e.clientX-r.left)/r.width*100));
+  const ny = Math.max(2, Math.min(98,(e.clientY-r.top)/r.height*100));
+  const {team, idx} = matchDragState;
+  if(team==='my'){
+    matchMyPos[idx] = {x:nx, y:ny};
+    const el = document.getElementById(`mpd${idx}`);
+    if(el){ el.style.left=nx+'%'; el.style.top=ny+'%'; }
+    const lbl = document.getElementById(`mpdlabel${idx}`);
+    if(lbl && !assignments[idx]){
+      const myF = getFormation(curFid);
+      lbl.textContent = detectPos(nx, ny>50?(ny-53)/0.39:50, myF.p[idx].pos==='GK');
+    }
+  } else {
+    matchOppPos[idx] = {x:nx, y:ny};
+    const el = document.getElementById(`opd${idx}`);
+    if(el){ el.style.left=nx+'%'; el.style.top=ny+'%'; }
+  }
+}
+
+function onMatchEnd(e){
+  document.removeEventListener('pointermove', onMatchMove);
+  document.removeEventListener('pointerup',   onMatchEnd);
+  document.removeEventListener('pointercancel', onMatchEnd);
+  document.getElementById('fpitchWrap').classList.remove('drag-active');
+  if(!matchDragState) return;
+  const {team, idx, moved} = matchDragState;
+  const el = document.getElementById(team==='my'?`mpd${idx}`:`opd${idx}`);
+  if(el) el.classList.remove('is-dragging');
+  matchDragState = null;
+  if(!moved){
+    // click → open modal for name
+    if(team==='my') openSlotModal(idx);
+    else openOppSlotModal(idx);
+  } else {
+    saveMatch();
+  }
+}
+
+// ─── ball drag ────────────────────────────────────────────────────
+function startBallDrag(e){
+  e.preventDefault(); e.stopPropagation();
+  ballDragState = true;
+  document.getElementById('soccerBall').classList.add('is-dragging');
+  document.addEventListener('pointermove', onBallMove, {passive:false});
+  document.addEventListener('pointerup',   onBallEnd);
+  document.addEventListener('pointercancel', onBallEnd);
+}
+function onBallMove(e){
+  if(!ballDragState) return;
+  e.preventDefault();
+  const r = document.getElementById('fpitchInner').getBoundingClientRect();
+  const nx = Math.max(2, Math.min(98,(e.clientX-r.left)/r.width*100));
+  const ny = Math.max(2, Math.min(98,(e.clientY-r.top)/r.height*100));
+  ballPos = {x:nx, y:ny};
+  const b = document.getElementById('soccerBall');
+  b.style.left=nx+'%'; b.style.top=ny+'%';
+}
+function onBallEnd(e){
+  document.removeEventListener('pointermove', onBallMove);
+  document.removeEventListener('pointerup',   onBallEnd);
+  document.removeEventListener('pointercancel', onBallEnd);
+  ballDragState = false;
+  document.getElementById('soccerBall').classList.remove('is-dragging');
+  saveMatch();
+}
+
+// ─── opponent slot modal ──────────────────────────────────────────
+function openOppSlotModal(idx){
+  modalMode = 'oppSlot';
+  modalSlot = idx;
+  const f = getFormation(oppFid);
+  const p = f.p[idx];
+  const a = oppAssignments[idx];
+  document.getElementById('mTitle').textContent = `상대팀 포지션: ${p.r}`;
+  document.getElementById('mSub').textContent = '상대 선수 이름을 입력하세요';
+  document.getElementById('mName').value = a?a.name:'';
+  document.getElementById('mPos').value  = a?a.position:p.pos;
+  document.getElementById('mClearBtn').style.display = a?'':'none';
+  document.getElementById('moverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('mName').focus(),100);
+}
+
+// patch confirmModal & clearSlot to handle oppSlot
+const _origConfirm = confirmModal;
+confirmModal = function(){
+  if(modalMode==='oppSlot'){
+    const name = document.getElementById('mName').value.trim();
+    const pos  = document.getElementById('mPos').value;
+    if(!name){ showToast('이름을 입력하세요'); return; }
+    oppAssignments[modalSlot] = {name, position:pos};
+    saveMatch(); renderMatchView();
+    showToast(`${name} 배치 완료!`);
+    closeModal(); return;
+  }
+  _origConfirm();
+};
+const _origClear = clearSlot;
+clearSlot = function(){
+  if(modalMode==='oppSlot'){
+    delete oppAssignments[modalSlot];
+    saveMatch(); renderMatchView();
+    showToast('선수 제거됨'); closeModal(); return;
+  }
+  _origClear();
+};
+
+// ─── util ─────────────────────────────────────────────────────────
+function resetMatchPositions(){
+  matchMyPos=[]; matchOppPos=[];
+  saveMatch(); renderMatchView();
+  showToast('대전 뷰 위치 초기화');
+}
+function centerBall(){
+  ballPos={x:50,y:50};
+  const b=document.getElementById('soccerBall');
+  b.style.left='50%'; b.style.top='50%';
+  saveMatch();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SCENE EDITOR
+// ═══════════════════════════════════════════════════════════════════
+let scenes = [];
+let currentSceneIdx = -1;
+let isPlaying = false;
+let playTimer = null;
+let playStepTimer = null;
+
+// ─── save / load scenes ───────────────────────────────────────────
+function saveScenes(){
+  localStorage.setItem('ykfc2_scenes', JSON.stringify(scenes));
+}
+function loadScenes(){
+  try{ scenes = JSON.parse(localStorage.getItem('ykfc2_scenes')||'[]'); }catch(e){ scenes=[]; }
+}
+
+// ─── capture current match view as a scene ───────────────────────
+function captureScene(){
+  // Make sure match view is rendered first
+  const myPos  = getMatchMyPos().map(p=>({...p}));
+  const oppPos = getMatchOppPos().map(p=>({...p}));
+  const ball   = {...ballPos};
+  scenes.push({ id:Date.now(), name:`장면 ${scenes.length+1}`, myPos, oppPos, ballPos:ball });
+  saveScenes();
+  renderSceneList();
+  showToast(`📸 장면 ${scenes.length} 저장됨`);
+}
+
+// ─── delete a scene ───────────────────────────────────────────────
+function deleteScene(e, idx){
+  e.stopPropagation();
+  scenes.splice(idx,1);
+  // rename remaining
+  scenes.forEach((s,i)=>{ s.name=`장면 ${i+1}`; });
+  if(currentSceneIdx >= scenes.length) currentSceneIdx = scenes.length-1;
+  saveScenes();
+  renderSceneList();
+}
+
+// ─── clear all ───────────────────────────────────────────────────
+function clearScenes(){
+  if(!scenes.length) return;
+  if(!confirm('모든 장면을 삭제할까요?')) return;
+  stopPlay();
+  scenes=[];
+  currentSceneIdx=-1;
+  saveScenes();
+  renderSceneList();
+}
+
+// ─── jump to scene (click on card) ───────────────────────────────
+function jumpToScene(idx){
+  if(isPlaying) stopPlay();
+  currentSceneIdx = idx;
+  applyScene(idx, false);
+  renderSceneList();
+  setSceneStatus(`장면 ${idx+1} / ${scenes.length}`);
+}
+
+// ─── apply scene positions to match view DOM ─────────────────────
+function applyScene(idx, animate){
+  if(idx < 0 || idx >= scenes.length) return;
+  const sc = scenes[idx];
+  const dur = animate ? 2.5 : 0;
+  const ease = 'cubic-bezier(0.45,0,0.55,1)';
+
+  // Update state arrays so renderMatchView stays in sync
+  sc.myPos.forEach((p,i)=>{ matchMyPos[i]  = {...p}; });
+  sc.oppPos.forEach((p,i)=>{ matchOppPos[i] = {...p}; });
+  ballPos = {...sc.ballPos};
+
+  // Animate my team dots
+  const myDots = document.getElementById('matchMyDots');
+  if(myDots) [...myDots.querySelectorAll('.pdot')].forEach((el,i)=>{
+    if(!sc.myPos[i]) return;
+    el.style.transition = animate ? `left ${dur}s ${ease}, top ${dur}s ${ease}` : 'none';
+    el.style.left = sc.myPos[i].x+'%';
+    el.style.top  = sc.myPos[i].y+'%';
+    // update label
+    const lbl = el.querySelector('.pdot-label');
+    if(lbl && !assignments[i]){
+      const f = getFormation(curFid);
+      lbl.textContent = detectPos(sc.myPos[i].x, sc.myPos[i].y>50?(sc.myPos[i].y-53)/0.39:50, f.p[i].pos==='GK');
+    }
+  });
+
+  // Animate opp dots
+  const oppDots = document.getElementById('oppDots');
+  if(oppDots) [...oppDots.querySelectorAll('.pdot')].forEach((el,i)=>{
+    if(!sc.oppPos[i]) return;
+    el.style.transition = animate ? `left ${dur}s ${ease}, top ${dur}s ${ease}` : 'none';
+    el.style.left = sc.oppPos[i].x+'%';
+    el.style.top  = sc.oppPos[i].y+'%';
+  });
+
+  // Animate ball
+  const ball = document.getElementById('soccerBall');
+  if(ball){
+    ball.style.transition = animate ? `left ${dur}s ${ease}, top ${dur}s ${ease}` : 'none';
+    ball.style.left = sc.ballPos.x+'%';
+    ball.style.top  = sc.ballPos.y+'%';
+  }
+}
+
+// ─── playback ────────────────────────────────────────────────────
+function togglePlay(){
+  if(isPlaying) stopPlay();
+  else playScenes();
+}
+
+function playScenes(){
+  if(!scenes.length){ showToast('장면을 먼저 추가하세요'); return; }
+  stopPlay();
+  isPlaying = true;
+  currentSceneIdx = 0;
+
+  // Snap to first scene immediately
+  applyScene(0, false);
+  renderSceneList();
+  updatePlayBtn();
+  setSceneStatus(`▶ 재생 중... 장면 1 / ${scenes.length}`);
+  showProgressBar(true);
+
+  // If only one scene, just show it
+  if(scenes.length === 1){
+    isPlaying = false;
+    updatePlayBtn();
+    setSceneStatus(`장면 1 / 1`);
+    return;
+  }
+
+  // Advance to subsequent scenes
+  let step = 1;
+  const advance = ()=>{
+    if(!isPlaying) return;
+    currentSceneIdx = step;
+    applyScene(step, true);
+    renderSceneList();
+    setSceneStatus(`▶ 재생 중... 장면 ${step+1} / ${scenes.length}`);
+    animateProgressBar(step / (scenes.length-1));
+
+    step++;
+    if(step < scenes.length){
+      playTimer = setTimeout(advance, 2500);
+    } else {
+      // Done
+      playTimer = setTimeout(()=>{
+        isPlaying = false;
+        updatePlayBtn();
+        setSceneStatus(`✅ 재생 완료 (${scenes.length}장면)`);
+        showProgressBar(false);
+      }, 2500);
+    }
+  };
+  playTimer = setTimeout(advance, 2500);
+}
+
+function stopPlay(){
+  isPlaying = false;
+  clearTimeout(playTimer);
+  clearTimeout(playStepTimer);
+  updatePlayBtn();
+  showProgressBar(false);
+  if(currentSceneIdx >= 0 && scenes.length)
+    setSceneStatus(`장면 ${currentSceneIdx+1} / ${scenes.length}`);
+  else
+    setSceneStatus('');
+}
+
+function updatePlayBtn(){
+  const btn = document.getElementById('playBtn');
+  if(!btn) return;
+  btn.textContent = isPlaying ? '⏸ 일시정지' : '▶ 재생';
+  btn.classList.toggle('active', isPlaying);
+}
+
+function showProgressBar(show){
+  const el = document.getElementById('playProgress');
+  if(el) el.classList.toggle('visible', show);
+  if(!show){
+    const bar = document.getElementById('playProgressBar');
+    if(bar) bar.style.width='0%';
+  }
+}
+
+function animateProgressBar(ratio){
+  const bar = document.getElementById('playProgressBar');
+  if(bar) bar.style.width = (ratio*100)+'%';
+}
+
+function setSceneStatus(txt){
+  const el = document.getElementById('sceneStatus');
+  if(el) el.textContent = txt;
+}
+
+// ─── render scene list ───────────────────────────────────────────
+function renderSceneList(){
+  const container = document.getElementById('sceneList');
+  if(!container) return;
+
+  if(!scenes.length){
+    container.innerHTML = `<div class="scene-empty">
+      <span style="font-size:28px;">🎬</span>
+      <span>대전 뷰에서 포지션을 잡고<br><b style="color:var(--text)">📸 장면 추가</b>를 눌러보세요</span>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = scenes.map((sc,i)=>{
+    const active = i === currentSceneIdx;
+    const myDots = sc.myPos.map(p=>`<div class="sdot my" style="left:${p.x}%;top:${p.y}%"></div>`).join('');
+    const oppDots = sc.oppPos.map(p=>`<div class="sdot opp" style="left:${p.x}%;top:${p.y}%"></div>`).join('');
+    return `
+      <div class="scard ${active?'active':''}" onclick="jumpToScene(${i})">
+        <div class="scard-hdr">
+          <span class="scard-name">${sc.name}</span>
+          <button class="scard-del" onclick="deleteScene(event,${i})">✕</button>
+        </div>
+        <div class="scard-pitch">
+          <div class="scard-cline"></div>
+          <div class="scard-ptop"></div>
+          <div class="scard-pbot"></div>
+          ${myDots}${oppDots}
+          <div class="sdot ball" style="left:${sc.ballPos.x}%;top:${sc.ballPos.y}%">⚽</div>
+        </div>
+        <div class="scard-indicator ${active&&isPlaying?'playing':''}"></div>
+      </div>`;
+  }).join('');
+}
+
+// ─── patch init ───────────────────────────────────────────────────
+const _origInit = init;
+init = function(){
+  _origInit();
+  loadMatch();
+  loadScenes();
+  renderOppFlist();
+  renderMatchView();
+  renderSceneList();
+};
+
+init();
+</script>
+</body>
+</html>
